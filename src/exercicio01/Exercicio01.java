@@ -1,7 +1,7 @@
 package exercicio01;
 
 import java.util.Scanner;
-public class Exercico01{
+public class Exercicio01 {
     public static void main(String[] args){
         /*1.	Escreva um programa que leia o nome de um aluno e suas três notas, sendo a terceira nota com peso 2.
         Calcule e exiba a média ponderada, com duas casas decimais. Depois, exiba se o aluno está "Aprovado" (média ≥ 7) ou "Reprovado".*/
