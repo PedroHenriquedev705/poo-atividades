@@ -1,4 +1,4 @@
-package exercicio03;
+package lista02.exercicio03;
 import java.util.Scanner;
 /*3.Peça ao usuário um número inteiro positivo N.
  Em seguida, imprima todos os números primos entre 2 e N.*/
