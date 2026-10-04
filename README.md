@@ -94,3 +94,31 @@ public void setPreco(double preco) {
 
 Se `preco` fosse público, algo como `produto.preco = -50;` seria aceito e deixaria o objeto com dados inválidos. Com o setter, essa atribuição é barrada e a integridade do objeto é preservada.
 
+
+
+## Questão 2: Sistema de controle de biblioteca
+
+### Informações relevantes para representar um livro
+
+- Título
+- Autor(es)
+- ISBN (identificador único)
+- Editora
+- Ano de publicação
+- Edição
+- Categoria ou gênero
+- Número de exemplares (total e disponíveis)
+- Localização na estante
+- Status (disponível, emprestado, reservado)
+
+### Por que `Livro` é uma abstração?
+
+Porque a classe representa apenas as características do livro que são **relevantes para o sistema**, ignorando todo o resto (cor da capa, peso, cheiro, número de páginas amareladas etc.). Ela simplifica um objeto do mundo real, escondendo detalhes irrelevantes e expondo só o que importa para o contexto da biblioteca: identificar, emprestar, devolver e consultar.
+
+### Métodos que fariam sentido
+
+- `emprestar()`: marca um exemplar como emprestado e reduz a quantidade disponível, se houver algum.
+- `devolver()`: registra a devolução e aumenta a quantidade disponível.
+- `reservar()`: reserva o livro quando não há exemplares disponíveis.
+- `estaDisponivel()`: retorna se há ao menos um exemplar para empréstimo.
+- `exibirInfo()`: imprime os dados do livro.
