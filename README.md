@@ -165,3 +165,119 @@ A variável (`notas`, `alunos`) em si é uma referência na pilha (stack) que ap
 - **Cópia do array é rasa:** `clone()` e `Arrays.copyOf()` copiam as referências, não os objetos, então o novo array compartilha os mesmos objetos.
 - **Comparação:** `==` compara referências, não conteúdo. Para comparar o conteúdo, usar `equals()` (sobrescrito na classe).
 - **Limites do índice:** acessar fora de `0..length-1` lança `ArrayIndexOutOfBoundsException`, igual nos primitivos.
+
+# Lista 04
+
+## Questão 1: Verdadeiro ou falso
+
+**a) Os construtores de superclasse não são herdados por subclasses.**
+
+**Verdadeira.** Construtores não são herdados. Cada classe define os seus. A subclasse apenas **chama** o construtor da superclasse, usando `super(...)`, para inicializar a parte herdada do objeto.
+
+**b) Um relacionamento "tem um" é implementado via herança.**
+
+**Falsa.** Herança implementa o relacionamento **"é um"** (`Cachorro` é um `Animal`). O relacionamento **"tem um"** é implementado por **composição**: uma classe possui, como atributo, um objeto de outra classe (`Carro` tem um `Motor`).
+
+```java
+class Carro {
+    private Motor motor; // Carro "tem um" Motor
+}
+```
+
+**c) Quando uma subclasse redefine um método da superclasse com a mesma assinatura, diz-se que ela sobrecarrega esse método.**
+
+**Falsa.** Redefinir um método com a mesma assinatura é **sobrescrita** (*override*). **Sobrecarga** (*overload*) é ter métodos com o **mesmo nome e parâmetros diferentes**, na mesma classe ou na hierarquia.
+
+```java
+class Animal {
+    void emitirSom() { System.out.println("..."); }
+}
+
+class Cachorro extends Animal {
+    @Override
+    void emitirSom() { System.out.println("Au au"); } // sobrescrita
+
+    void emitirSom(int vezes) { /* ... */ }           // sobrecarga
+}
+```
+
+
+
+## Questão 2: `protected` vs. `private` em superclasses
+
+### Argumentos a favor de `protected`
+
+- **Acesso direto das subclasses:** elas usam e alteram o atributo sem precisar de getters e setters, com código mais simples.
+- **Desempenho:** evita a chamada de método, embora a diferença seja desprezível na prática.
+- **Extensibilidade:** facilita criar subclasses que precisam do estado interno da superclasse.
+
+### Argumentos a favor de `private`
+
+- **Encapsulamento forte:** só a própria classe acessa seus dados, então ela controla totalmente o seu estado.
+- **Validação centralizada:** toda alteração passa pelo setter, que garante que o objeto continue consistente. Com `protected`, cada subclasse poderia quebrar essa regra.
+- **Manutenção:** a superclasse pode mudar sua representação interna sem quebrar as subclasses. Com `protected`, qualquer mudança no atributo afeta todas elas.
+- **Acoplamento menor:** a subclasse depende da interface pública, não de detalhes de implementação.
+- **Brecha no pacote:** em Java, `protected` também dá acesso a qualquer classe do **mesmo pacote**, o que expõe ainda mais o atributo.
+
+### Conclusão
+
+Os atributos devem ser `private`, com acesso por getters e setters (`public` ou `protected`). Assim a superclasse mantém o encapsulamento e as subclasses ainda conseguem usar o que precisam. O `protected` fica melhor para **métodos** pensados para as subclasses (pontos de extensão), e não para atributos.
+
+```java
+public class Funcionario {
+    private double salario; // protegido por encapsulamento
+
+    protected double getSalario() { return salario; }
+
+    protected void setSalario(double salario) {
+        if (salario < 0) {
+            throw new IllegalArgumentException("Salário inválido.");
+        }
+        this.salario = salario;
+    }
+}
+```
+
+
+
+## Questão 3: Chamada de construtores em hierarquias de herança
+
+### Como funciona
+
+Ao criar um objeto de uma subclasse, os construtores são executados **da superclasse mais alta até a classe mais baixa**. A primeira instrução de todo construtor é a chamada a outro construtor: `super(...)` (da superclasse) ou `this(...)` (da própria classe).
+
+- Se o programador não escrever nada, o compilador insere automaticamente `super();`, que chama o construtor **sem argumentos** da superclasse.
+- Se a superclasse **não tem** construtor sem argumentos, a subclasse é obrigada a chamar `super(...)` explicitamente com os argumentos corretos. Caso contrário, o código **não compila**.
+- A chamada a `super(...)` deve ser a **primeira instrução** do construtor.
+
+**Exemplo:**
+
+```java
+class Animal {
+    Animal(String nome) {
+        System.out.println("Animal: " + nome);
+    }
+}
+
+class Cachorro extends Animal {
+    Cachorro(String nome) {
+        super(nome); // obrigatório: Animal não tem construtor vazio
+        System.out.println("Cachorro: " + nome);
+    }
+}
+
+// new Cachorro("Rex");
+```
+
+Saída:
+
+```text
+Animal: Rex
+Cachorro: Rex
+```
+
+### Por que a chamada é obrigatória?
+
+Um objeto da subclasse **contém** a parte da superclasse (atributos herdados). Essa parte precisa ser inicializada antes de a subclasse usá-la, e quem sabe inicializá-la é o construtor da superclasse, principalmente quando ela tem atributos `private` que a subclasse não acessa diretamente.
+
+Sem essa chamada, o objeto poderia ficar com a parte herdada em estado inválido ou não inicializado, e as subclasses poderiam usar dados inconsistentes. Por isso o Java garante, de forma implícita ou explícita, que **toda a cadeia de construtores seja executada**, da raiz (`Object`) até a classe instanciada.
