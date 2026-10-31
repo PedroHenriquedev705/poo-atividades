@@ -281,3 +281,83 @@ Cachorro: Rex
 Um objeto da subclasse **contém** a parte da superclasse (atributos herdados). Essa parte precisa ser inicializada antes de a subclasse usá-la, e quem sabe inicializá-la é o construtor da superclasse, principalmente quando ela tem atributos `private` que a subclasse não acessa diretamente.
 
 Sem essa chamada, o objeto poderia ficar com a parte herdada em estado inválido ou não inicializado, e as subclasses poderiam usar dados inconsistentes. Por isso o Java garante, de forma implícita ou explícita, que **toda a cadeia de construtores seja executada**, da raiz (`Object`) até a classe instanciada.
+
+
+# Lista 05
+
+## Questão 1: Métodos com corpo em interfaces
+
+**A partir de qual versão?** Desde o **Java 8**, as interfaces podem ter métodos `default` e `static` com corpo. (No Java 9 também passaram a aceitar métodos `private`, usados para reaproveitar código entre os métodos `default`.)
+
+### Utilidade dos métodos `default`
+
+- **Evolução de interfaces sem quebrar código existente:** antes do Java 8, adicionar um método abstrato a uma interface obrigava todas as classes que a implementavam a serem alteradas. Com `default`, o método novo já vem com uma implementação padrão e as classes antigas continuam compilando. Foi assim que o Java adicionou `forEach` e `stream` à interface `Collection`.
+- **Comportamento padrão reaproveitável:** as classes herdam a implementação e só sobrescrevem se precisarem de algo diferente.
+
+### Utilidade dos métodos `static`
+
+- **Métodos utilitários ligados à interface:** ficam na própria interface, em vez de numa classe auxiliar separada (como `Collections` para `Collection`). Exemplo: `Comparator.comparing(...)`.
+- Não são herdados pelas classes que implementam a interface; são chamados pelo nome da interface (`Interface.metodo()`).
+
+```java
+public interface Imprimivel {
+    void imprimir();
+
+    default void imprimirDuasVezes() {   // método default
+        imprimir();
+        imprimir();
+    }
+
+    static Imprimivel vazio() {          // método static
+        return () -> { };
+    }
+}
+```
+
+
+
+## Questão 2: Interfaces, desacoplamento e manutenção
+
+### Como as interfaces ajudam
+
+- **Dependência do contrato, não da implementação:** o código cliente usa a interface e não sabe qual classe concreta está por trás. Se a implementação mudar, o cliente não precisa mudar.
+- **Substituição fácil (polimorfismo):** é possível trocar uma implementação por outra sem alterar quem a usa.
+- **Testabilidade:** em testes, a implementação real pode ser trocada por uma falsa (*mock*), sem acessar banco de dados, rede etc.
+- **Trabalho em paralelo:** equipes combinam o contrato e desenvolvem cada lado separadamente.
+- **Extensibilidade:** novos comportamentos são adicionados criando novas classes, sem modificar o código existente (princípio aberto/fechado).
+- **Herança múltipla de tipo:** uma classe pode implementar várias interfaces, o que não é possível com classes.
+
+### Exemplo prático: envio de notificações
+
+Um sistema precisa notificar o cliente. Se o serviço de pedidos usar diretamente a classe `EmailService`, ele fica preso ao e-mail. Se amanhã for preciso enviar SMS ou notificação push, será necessário alterar o serviço de pedidos.
+
+Com uma interface, o serviço depende só do contrato:
+
+```java
+public interface Notificador {
+    void enviar(String destino, String mensagem);
+}
+
+public class NotificadorEmail implements Notificador {
+    public void enviar(String destino, String mensagem) { /* envia e-mail */ }
+}
+
+public class NotificadorSms implements Notificador {
+    public void enviar(String destino, String mensagem) { /* envia SMS */ }
+}
+
+public class PedidoService {
+    private final Notificador notificador; // depende da interface
+
+    public PedidoService(Notificador notificador) {
+        this.notificador = notificador;
+    }
+
+    public void finalizarPedido(String cliente) {
+        // ... regras do pedido ...
+        notificador.enviar(cliente, "Pedido finalizado!");
+    }
+}
+```
+
+Para trocar e-mail por SMS, basta passar outra implementação no construtor; `PedidoService` não muda. Nos testes, usa-se um `Notificador` falso, sem enviar mensagens de verdade.
